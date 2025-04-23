@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录/注册</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 350px;
+        }
+        
+        .form-container {
+            display: none;
+        }
+        
+        .form-container.active {
+            display: block;
+        }
+        
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .toggle-form {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .toggle-form a {
+            color: #4CAF50;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .captcha-container {
+            display: flex;
+            margin: 10px 0;
+        }
+        
+        #captchaInput {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        #captchaText {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+            user-select: none;
+            cursor: pointer;
+        }
+        
+        .error {
+            color: red;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 登录表单 -->
+        <div id="loginForm" class="form-container active">
+            <h2>登录</h2>
+            <div id="loginError" class="error"></div>
+            <input type="text" id="loginUsername" placeholder="用户名" required>
+            <input type="password" id="loginPassword" placeholder="密码" required>
+            <div class="captcha-container">
+                <input type="text" id="loginCaptcha" placeholder="验证码" required>
+                <div id="loginCaptchaText" class="captcha-text">AB12</div>
+            </div>
+            <button onclick="login()">登录</button>
+            <div class="toggle-form">
+                还没有账号? <a onclick="showRegister()">立即注册</a>
+            </div>
+        </div>
+        
+        <!-- 注册表单 -->
+        <div id="registerForm" class="form-container">
+            <h2>注册</h2>
+            <div id="registerError" class="error"></div>
+            <input type="text" id="registerUsername" placeholder="用户名" required>
+            <input type="password" id="registerPassword" placeholder="密码" required>
+            <input type="password" id="registerConfirmPassword" placeholder="确认密码" required>
+            <div class="captcha-container">
+                <input type="text" id="registerCaptcha" placeholder="验证码" required>
+                <div id="registerCaptchaText" class="captcha-text">CD34</div>
+            </div>
+            <button onclick="register()">注册</button>
+            <div class="toggle-form">
+                已有账号? <a onclick="showLogin()">立即登录</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 生成随机验证码
+        function generateCaptcha() {
+            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let captcha = '';
+            for (let i = 0; i < 4; i++) {
+                captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return captcha;
+        }
+        
+        // 初始化验证码
+        let loginCaptcha = generateCaptcha();
+        let registerCaptcha = generateCaptcha();
+        document.getElementById('loginCaptchaText').textContent = loginCaptcha;
+        document.getElementById('registerCaptchaText').textContent = registerCaptcha;
+        
+        // 刷新验证码
+        document.getElementById('loginCaptchaText').addEventListener('click', function() {
+            loginCaptcha = generateCaptcha();
+            this.textContent = loginCaptcha;
+        });
+        
+        document.getElementById('registerCaptchaText').addEventListener('click', function() {
+            registerCaptcha = generateCaptcha();
+            this.textContent = registerCaptcha;
+        });
+        
+        // 切换表单显示
+        function showRegister() {
+            document.getElementById('loginForm').classList.remove('active');
+            document.getElementById('registerForm').classList.add('active');
+            document.getElementById('loginError').textContent = '';
+        }
+        
+        function showLogin() {
+            document.getElementById('registerForm').classList.remove('active');
+            document.getElementById('loginForm').classList.add('active');
+            document.getElementById('registerError').textContent = '';
+        }
+        
+        // 模拟登录
+        function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const captcha = document.getElementById('loginCaptcha').value;
+            const errorElement = document.getElementById('loginError');
+            
+            // 验证验证码
+            if (captcha !== loginCaptcha) {
+                errorElement.textContent = '验证码错误';
+                loginCaptcha = generateCaptcha();
+                document.getElementById('loginCaptchaText').textContent = loginCaptcha;
+                return;
+            }
+            
+            // 检查本地存储中的用户数据
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                alert('登录成功! 欢迎 ' + username);
+                // 这里可以重定向到其他页面
+            } else {
+                errorElement.textContent = '用户名或密码错误';
+            }
+            
+            // 刷新验证码
+            loginCaptcha = generateCaptcha();
+            document.getElementById('loginCaptchaText').textContent = loginCaptcha;
+        }
+        
+        // 模拟注册
+        function register() {
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            const captcha = document.getElementById('registerCaptcha').value;
+            const errorElement = document.getElementById('registerError');
+            
+            // 验证验证码
+            if (captcha !== registerCaptcha) {
+                errorElement.textContent = '验证码错误';
+                registerCaptcha = generateCaptcha();
+                document.getElementById('registerCaptchaText').textContent = registerCaptcha;
+                return;
+            }
+            
+            // 验证密码匹配
+            if (password !== confirmPassword) {
+                errorElement.textContent = '两次输入的密码不一致';
+                return;
+            }
+            
+            // 验证用户名长度
+            if (username.length < 4) {
+                errorElement.textContent = '用户名至少需要4个字符';
+                return;
+            }
+            
+            // 验证密码长度
+            if (password.length < 6) {
+                errorElement.textContent = '密码至少需要6个字符';
+                return;
+            }
+            
+            // 检查用户名是否已存在
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            if (users.some(u => u.username === username)) {
+                errorElement.textContent = '用户名已存在';
+                return;
+            }
+            
+            // 保存用户数据到本地存储
+            users.push({ username, password });
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            alert('注册成功! 现在可以登录了');
+            showLogin();
+            
+            // 刷新验证码
+            registerCaptcha = generateCaptcha();
+            document.getElementById('registerCaptchaText').textContent = registerCaptcha;
+            
+            // 清空注册表单
+            document.getElementById('registerUsername').value = '';
+            document.getElementById('registerPassword').value = '';
+            document.getElementById('registerConfirmPassword').value = '';
+            document.getElementById('registerCaptcha').value = '';
+        }
+    </script>
+</body>
+</html>
